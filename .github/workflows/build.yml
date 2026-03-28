@@ -4,72 +4,62 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "*"
-      - "*/**"
+      - '*'
+      - '*/**'
     paths-ignore:
-      - "README.md"
-      - "CHANGELOG.md"
-      - "LICENSE"
-      - "doc/**"
-      - ".gitignore"
-      - ".gitattributes"
-      - ".github/workflows/publish.yml"
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'LICENSE'
+      - 'doc/**'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.github/workflows/publish.yml'
+
 
 jobs:
   main:
-    runs-on:
-      - self-hosted
-      - windows
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
 
-      - name: Install WiX
-        shell: pwsh
-        run: |
-          dotnet tool update --global wix
-          if ($LASTEXITCODE -ne 0) {
-            dotnet tool install --global wix
-          }
+    - name: Install WiX
+      run: |
+        dotnet tool install --global wix
+        wix extension add -g WixToolset.Util.wixext
+        wix extension add -g WixToolset.UI.wixext
 
-          $extensions = wix extension list -g 2>$null
-          foreach ($extension in @('WixToolset.Util.wixext', 'WixToolset.UI.wixext')) {
-            if ($extensions -notmatch [regex]::Escape($extension)) {
-              wix extension add -g $extension
-            }
-          }
+    - name: Get Version
+      shell: bash
+      run: |
+        version=`python .tools/get-version.py`
+        echo Version: $version
+        echo "GH_BUILD_VERSION=$version" >> $GITHUB_ENV
 
-      - name: Get Version
-        shell: pwsh
-        run: |
-          $version = python .tools/get-version.py
-          Write-Host "Version: $version"
-          "GH_BUILD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+    - name: Fetch dependencies
+      shell: bash
+      run: python fetch.py
 
-      - name: Fetch dependencies
-        shell: pwsh
-        run: python fetch.py
+    - name: Build
+      shell: bash
+      run: python build.py
 
-      - name: Build
-        shell: pwsh
-        run: python build.py
+    - name: Archive x64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Translit-${{ env.GH_BUILD_VERSION }}-x64.msi
+        path: build\Installers\Release\Translit-x64.msi
+        retention-days: 3
 
-      - name: Archive x64 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Translit-${{ env.GH_BUILD_VERSION }}-x64.msi
-          path: build\Installers\Release\Translit-x64.msi
-          retention-days: 3
-
-      - name: Archive arm64 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Translit-${{ env.GH_BUILD_VERSION }}-arm64.msi
-          path: build\Installers\Release\Translit-arm64.msi
-          retention-days: 3
+    - name: Archive arm64 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Translit-${{ env.GH_BUILD_VERSION }}-arm64.msi
+        path: build\Installers\Release\Translit-arm64.msi
+        retention-days: 3
