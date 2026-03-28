@@ -8,3 +8,4 @@ fuckms/
 out/
 build/
 generated/
+.env
