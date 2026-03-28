@@ -8,54 +8,108 @@ on:
 
 jobs:
   main:
-    runs-on: windows-latest
+    runs-on:
+      - self-hosted
+      - windows
     permissions: write-all
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        clean: false
+
+    - name: Clean old build outputs
+      shell: pwsh
+      run: Remove-Item build -Recurse -Force -ErrorAction SilentlyContinue
+
+    - name: Load .env
+      shell: pwsh
+      run: |
+        if (-not (Test-Path .env)) {
+          throw ".env file not found in repository root"
+        }
+
+        Get-Content .env | ForEach-Object {
+          $line = $_.Trim()
+          if (-not $line -or $line.StartsWith('#')) {
+            return
+          }
+
+          $parts = $line -split '=', 2
+          if ($parts.Count -ne 2) {
+            throw "Invalid .env line: $line"
+          }
+
+          "$($parts[0].Trim())=$($parts[1].Trim())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        }
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
 
-    - name: Install WiX
+    - name: Validate publish configuration
+      shell: pwsh
       run: |
-        dotnet tool install --global wix
-        wix extension add -g WixToolset.Util.wixext
-        wix extension add -g WixToolset.UI.wixext
+        $required = @(
+          'AWS_ACCESS_KEY_ID',
+          'AWS_SECRET_ACCESS_KEY',
+          'AWS_DEFAULT_REGION',
+          'AWS_S3_BUCKET'
+        )
+
+        foreach ($name in $required) {
+          $value = [Environment]::GetEnvironmentVariable($name)
+          if ([string]::IsNullOrWhiteSpace($value) -or $value.StartsWith('REPLACE_WITH_')) {
+            throw "Missing required .env value: $name"
+          }
+        }
+
+    - name: Install AWS CLI
+      shell: pwsh
+      run: python -m pip install --upgrade pip awscli
+
+    - name: Install WiX
+      shell: pwsh
+      run: |
+        dotnet tool update --global wix
+        if ($LASTEXITCODE -ne 0) {
+          dotnet tool install --global wix
+        }
+
+        $extensions = wix extension list -g 2>$null
+        foreach ($extension in @('WixToolset.Util.wixext', 'WixToolset.UI.wixext')) {
+          if ($extensions -notmatch [regex]::Escape($extension)) {
+            wix extension add -g $extension
+          }
+        }
 
     - name: Get Version
-      shell: bash
+      shell: pwsh
       run: |
-        version=`python .tools/get-version.py`
-        echo Version: $version
-        echo "GH_BUILD_VERSION=$version" >> $GITHUB_ENV
+        $version = python .tools/get-version.py
+        Write-Host "Version: $version"
+        "GH_BUILD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Fetch dependencies
-      shell: bash
+      shell: pwsh
       run: python fetch.py
 
     - name: Build
-      shell: bash
+      shell: pwsh
       run: |
         python build.py
-        mv build/Installers/Release/Translit-x64.msi build/Installers/Release/Translit-${{ env.GH_BUILD_VERSION }}-x64.msi
-        mv build/Installers/Release/Translit-arm64.msi build/Installers/Release/Translit-${{ env.GH_BUILD_VERSION }}-arm64.msi
-        mv build/Installers/Release/Translit-x64.pdb.zip build/Installers/Release/Translit-${{ env.GH_BUILD_VERSION }}-x64.pdb.zip 
-        mv build/Installers/Release/Translit-arm64.pdb.zip build/Installers/Release/Translit-${{ env.GH_BUILD_VERSION }}-arm64.pdb.zip
+        Rename-Item build/Installers/Release/Translit-x64.msi "Translit-${{ env.GH_BUILD_VERSION }}-x64.msi"
+        Rename-Item build/Installers/Release/Translit-arm64.msi "Translit-${{ env.GH_BUILD_VERSION }}-arm64.msi"
+        Rename-Item build/Installers/Release/Translit-x64.pdb.zip "Translit-${{ env.GH_BUILD_VERSION }}-x64.pdb.zip"
+        Rename-Item build/Installers/Release/Translit-arm64.pdb.zip "Translit-${{ env.GH_BUILD_VERSION }}-arm64.pdb.zip"
 
     - name: Upload Symbols
-      shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      shell: pwsh
       run: |
-        for f in build/Installers/Release/Translit-*.pdb.zip
-        do 
-          aws s3 cp $f "s3://translit-symbols/"
-        done
+        Get-ChildItem "build/Installers/Release/Translit-*.pdb.zip" | ForEach-Object {
+          aws s3 cp $_.FullName "s3://$env:AWS_S3_BUCKET/"
+        }
       
     - name: Make release
       uses: softprops/action-gh-release@v2

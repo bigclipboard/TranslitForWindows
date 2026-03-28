@@ -18,7 +18,9 @@ on:
 
 jobs:
   main:
-    runs-on: windows-latest
+    runs-on:
+      - self-hosted
+      - windows
     
     steps:
     - name: Checkout
@@ -30,24 +32,33 @@ jobs:
         python-version: '3.13'
 
     - name: Install WiX
+      shell: pwsh
       run: |
-        dotnet tool install --global wix
-        wix extension add -g WixToolset.Util.wixext
-        wix extension add -g WixToolset.UI.wixext
+        dotnet tool update --global wix
+        if ($LASTEXITCODE -ne 0) {
+          dotnet tool install --global wix
+        }
+
+        $extensions = wix extension list -g 2>$null
+        foreach ($extension in @('WixToolset.Util.wixext', 'WixToolset.UI.wixext')) {
+          if ($extensions -notmatch [regex]::Escape($extension)) {
+            wix extension add -g $extension
+          }
+        }
 
     - name: Get Version
-      shell: bash
+      shell: pwsh
       run: |
-        version=`python .tools/get-version.py`
-        echo Version: $version
-        echo "GH_BUILD_VERSION=$version" >> $GITHUB_ENV
+        $version = python .tools/get-version.py
+        Write-Host "Version: $version"
+        "GH_BUILD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
     - name: Fetch dependencies
-      shell: bash
+      shell: pwsh
       run: python fetch.py
 
     - name: Build
-      shell: bash
+      shell: pwsh
       run: python build.py
 
     - name: Archive x64 artifact
