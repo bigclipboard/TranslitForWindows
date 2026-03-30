@@ -13,7 +13,7 @@
 
 This Windows _text service_[^1] allows a user familiar only with Latin alphabet keyboard to 
 type in other languages by using common Latin transliteration of the target language letters. 
-Currently supported target languages are Russian, Hebrew, Ukrainian and Belarusian. 
+Currently supported target languages are Russian, Hebrew, Ukrainian, Belarusian and Uzbek. 
 To give an example, typing `privet` in Russian mode will produce `привет` and typing `hi` in Hebrew mode will produce `הי`.
 
 [^1]: sometimes called an IME but technically IME is a different older technology
@@ -37,7 +37,7 @@ To give an example, typing `privet` in Russian mode will produce `привет` 
   No hacky apps that need to run in the background and hook/hack into the OS workings.
 - Works in all apps: desktop and store and even login screen, x64, x86 and arm64.
 - Supports modern Windows versions 10 and 11
-- Supports multiple languages: currently Russian, Hebrew, Ukrainian and Belarusian with an easy way 
+- Supports multiple languages: currently Russian, Hebrew, Ukrainian, Belarusian and Uzbek with an easy way 
   to add more, if desired.
 - Not having to use punctuation like `'` or `#` for transliteration.<br/>
   When typing normally on Windows (as opposed to some designated transliteration app) switching between 
@@ -100,6 +100,7 @@ Currently supported character mappings can be found in the following documents
 * [Hebrew](doc/mapping-he.md)
 * [Russian](doc/mapping-ru.md)
 * [Ukrainian](doc/mapping-uk.md)
+* [Uzbek](doc/mapping-uz.md)
 
 ## Building
 
@@ -111,4 +112,3 @@ If you want to build the installers you will also need
 * Run `python fetch.py` script from the top-level directory. 
   This will fetch external dependencies
 * Open `Translit.sln` in Visual Studio and build the `Translit`, `Settings` or `Installer` targets
-

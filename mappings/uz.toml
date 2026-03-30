@@ -1,5 +1,6 @@
 language = 'uz'
 name = 'Uzbek'
+icon = 'uz'
 
 variants.default.display = 'default'
 

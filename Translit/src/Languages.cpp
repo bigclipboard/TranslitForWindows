@@ -14,6 +14,7 @@
 #include "../tables/TableHE.hpp"
 #include "../tables/TableRU.hpp"
 #include "../tables/TableUK.hpp"
+#include "../tables/TableUZ.hpp"
 
 using MappingFunc = Transliterator::MappingFunc;
 using Range = Transliterator::Range;
@@ -54,11 +55,17 @@ constexpr RealMappingInfo g_ukEntries[] = {
 };
 constexpr auto g_uk = structArrayToPtrArray(g_ukEntries);
 
+constexpr RealMappingInfo g_uzEntries[] = {
+    { L"", L"default", g_mapperUzDefault<Range> },
+};
+constexpr auto g_uz = structArrayToPtrArray(g_uzEntries);
+
 inline constexpr const ProfileInfo g_profiles[] = {
    {&g_guidProfileBe, L"be", L"Belarusian", L"Belarusian Translit", IDI_ICON_BE, &g_guidCompartmentBe, g_be},
    {&g_guidProfileHe, L"he", L"Hebrew", L"Hebrew Translit", IDI_ICON_HE, nullptr, g_he},
    {&g_guidProfileRu, L"ru", L"Russian", L"Russian Translit", IDI_ICON_RU, &g_guidCompartmentRu, g_ru},
-   {&g_guidProfileUk, L"uk", L"Ukrainian", L"Ukrainian Translit", IDI_ICON_UK, &g_guidCompartmentUk, g_uk}
+   {&g_guidProfileUk, L"uk", L"Ukrainian", L"Ukrainian Translit", IDI_ICON_UK, &g_guidCompartmentUk, g_uk},
+   {&g_guidProfileUz, L"uz", L"Uzbek", L"Uzbek Translit", IDI_ICON_RU, nullptr, g_uz}
 };
 
 auto getProfiles() -> std::span<const ProfileInfo> {

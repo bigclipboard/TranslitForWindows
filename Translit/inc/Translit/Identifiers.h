@@ -17,3 +17,5 @@ inline constexpr auto g_guidCompartmentUk = uuid("d2522504-8d32-4595-9081-256769
 
 inline constexpr auto g_guidProfileBe = uuid("289f9539-fe8a-4e32-93c1-ba413b6b853c").to_GUID();
 inline constexpr auto g_guidCompartmentBe = uuid("3a69f7db-a601-4f96-9d23-fb30ec9815b6").to_GUID();
+
+inline constexpr auto g_guidProfileUz = uuid("9f1f6b08-f378-4513-b204-ba3c62650779").to_GUID();

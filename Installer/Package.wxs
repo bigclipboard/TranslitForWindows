@@ -118,11 +118,12 @@
         <Control Id="CheckUK" Type="CheckBox" X="20" Y="86" Width="80" Height="14" Text="Ukrainian" CheckBoxValue="uk" Property="SelectedUK"/>
         <Control Id="CheckBE" Type="CheckBox" X="20" Y="102" Width="80" Height="14" Text="Belarusian" CheckBoxValue="be" Property="SelectedBE"/>
         <Control Id="CheckHE" Type="CheckBox" X="20" Y="118" Width="80" Height="14" Text="Hebrew" CheckBoxValue="he" Property="SelectedHE"/>
+        <Control Id="CheckUZ" Type="CheckBox" X="20" Y="134" Width="80" Height="14" Text="Uzbek" CheckBoxValue="uz" Property="SelectedUZ"/>
         
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)"
-                 EnableCondition="SelectedRU Or SelectedUK Or SelectedBE Or SelectedHE" 
-                 DisableCondition="Not (SelectedRU Or SelectedUK Or SelectedBE Or SelectedHE)">
-          <Publish Property="ENABLED_LANGUAGES" Value="[SelectedRU];[SelectedUK];[SelectedBE];[SelectedHE]"/>
+                 EnableCondition="SelectedRU Or SelectedUK Or SelectedBE Or SelectedHE Or SelectedUZ" 
+                 DisableCondition="Not (SelectedRU Or SelectedUK Or SelectedBE Or SelectedHE Or SelectedUZ)">
+          <Publish Property="ENABLED_LANGUAGES" Value="[SelectedRU];[SelectedUK];[SelectedBE];[SelectedHE];[SelectedUZ]"/>
           <Publish Event="NewDialog" Value="MyPrepareDlg"/>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
